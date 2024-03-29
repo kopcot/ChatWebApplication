@@ -1,0 +1,67 @@
+version: '3'
+name: webchat-app-1
+
+x-general: &general
+  pull_policy: build
+  volumes:
+    - /etc/timezone:/etc/timezone:ro
+    - /etc/localtime:/etc/localtime:ro
+  networks:
+    - webchat_network
+  restart: unless-stopped
+  build:
+    platforms:
+      - "linux/arm64"
+    args:
+      BUILD_CONFIGURATION: Release
+      BUILD_PLATFORMS: linux-arm64
+    cache_from:
+      - chat_server
+      - chat_webclient
+    target:
+      - restorer
+  deploy:
+    replicas: 1
+    resources:
+      limits:
+        memory: 1024M
+      reservations:
+        memory: 16M
+    update_config:
+      parallelism: 1
+      delay: 10s
+      order: stop-first
+
+services:
+  chat_server:
+    <<: *general
+    container_name: chat_server
+    image: chat_server:${IMAGE_TAG:-latest}
+#    ports:
+#      - "9020:8080"
+    build:
+      context: .
+      dockerfile: ./Server/ChatWebApplication.Server/Dockerfile
+      tags: 
+        - chat_server:${IMAGE_TAG:-latest}
+  chat_webclient:
+    <<: *general
+    container_name: chat_webclient
+    image: chat_webclient:${IMAGE_TAG:-latest}
+    environment:
+      ChatConnectionUrl: "http://chat_server:8080/chatHub"
+    ports:
+      - "9025:80"
+    depends_on:
+      chat_server:
+        condition: service_started
+    build:
+      context: .
+      dockerfile: ./Client/ChatWebApplication.Client/Dockerfile
+      tags: 
+        - chat_webclient:${IMAGE_TAG:-latest}
+
+networks:
+  webchat_network:
+    name: "webchat_network"
+    driver: bridge

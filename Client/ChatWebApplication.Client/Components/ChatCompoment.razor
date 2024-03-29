@@ -1,0 +1,21 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components
+
+<div class="chatcomponent" >
+    <div class="textboxes">
+        <div class="textbox">
+            <label>User name:</label>
+            <InputText @ref="UserNameElement" @onkeyup="HandleKeyUpUserName" @bind-Value="UserName" disabled=@(!ChangeableName) />
+        </div>
+        <div class="textbox">
+            <label>Text:</label>
+            <InputText @ref="ChatBoxTextElement" @onkeyup="HandleKeyUpChatBox" @bind-Value="ChatBoxText" disabled=@(ChangeableName && !IsAdmin ) />
+        </div>
+    </div>
+    <div class=@ConnectionClass>
+        @ConnectionStateBefore.ToString()
+    </div>
+    <div class="showntext @TextClass">
+        @((MarkupString)ReceivedMessage)
+    </div>
+</div>
